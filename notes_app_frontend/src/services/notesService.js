@@ -55,6 +55,8 @@ export async function createNote(payload, options = {}) {
     title: payload.title || '',
     content: payload.content || '',
     tags: payload.tags || [],
+    // Important: RLS requires user_id = auth.uid(). We set user_id from caller if provided.
+    // If omitted or null, the insert will fail due to WITH CHECK policy.
     user_id: options.userId || null,
     is_archived: !!payload.is_archived,
     is_deleted: false,

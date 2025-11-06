@@ -6,11 +6,13 @@ import NoteEditor from './components/NoteEditor';
 import EmptyState from './components/EmptyState';
 import { useNotes } from './hooks/useNotes';
 import { isSupabaseReady } from './supabaseClient';
+import { useAuth } from './hooks/useAuth';
 
 // PUBLIC_INTERFACE
 function App() {
   /** Main application layout */
   const [theme, setTheme] = useState('light');
+  const { user } = useAuth();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -18,8 +20,8 @@ function App() {
 
   const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
 
-  // For now, auth-agnostic; pass optional userId if/when added
-  const userId = null;
+  // Auth-aware userId
+  const userId = user?.id || null;
   const { notes, loading, error, selectedId, selectedNote, setSelectedId, addNote, saveNote, removeNote, setArchived } =
     useNotes({ userId });
 

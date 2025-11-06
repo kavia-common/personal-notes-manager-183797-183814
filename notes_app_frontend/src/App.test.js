@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import App from './App';
+import TopBar from './components/TopBar';
 
 test('renders top bar title', () => {
-  render(<App />);
+  render(<TopBar theme="light" onToggleTheme={() => {}} isConnected={false} />);
   const title = screen.getByText(/Personal Notes/i);
   expect(title).toBeInTheDocument();
 });
