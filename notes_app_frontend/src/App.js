@@ -1,47 +1,67 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
+import TopBar from './components/TopBar';
+import NotesList from './components/NotesList';
+import NoteEditor from './components/NoteEditor';
+import EmptyState from './components/EmptyState';
+import { useNotes } from './hooks/useNotes';
+import { isSupabaseReady } from './supabaseClient';
 
 // PUBLIC_INTERFACE
 function App() {
+  /** Main application layout */
   const [theme, setTheme] = useState('light');
 
-  // Effect to apply theme to document element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
+
+  // For now, auth-agnostic; pass optional userId if/when added
+  const userId = null;
+  const { notes, loading, error, selectedId, selectedNote, setSelectedId, addNote, saveNote, removeNote, setArchived } =
+    useNotes({ userId });
+
+  const handleCreate = async () => {
+    const created = await addNote({
+      title: 'Untitled',
+      content: '',
+      tags: [],
+    });
+    if (created?.id) setSelectedId(created.id);
   };
 
+  const isConnected = useMemo(() => isSupabaseReady(), []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app-shell">
+      <TopBar theme={theme} onToggleTheme={toggleTheme} isConnected={isConnected} />
+      <div className="content">
+        <NotesList
+          notes={notes}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onCreate={handleCreate}
+        />
+        <main className="main">
+          {loading ? (
+            <div className="loader">Loading notes…</div>
+          ) : notes.length === 0 ? (
+            <EmptyState onCreate={handleCreate} />
+          ) : (
+            <>
+              {error && <div className="error-banner">{error}</div>}
+              <NoteEditor
+                note={selectedNote}
+                onSave={saveNote}
+                onDelete={removeNote}
+                onArchive={setArchived}
+              />
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
